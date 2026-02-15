@@ -47,6 +47,7 @@ export const PCProvider = ({ children }: { children: ReactNode }) => {
 
   // Initialize data on client side only
   useEffect(() => {
+    // eslint-disable-next-line
     setPcs(generateMockData());
   }, []);
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePCContext } from '../context/PCContext';
-import { Play, Pause, RefreshCw, Zap, Plus } from 'lucide-react';
+import { Play, Pause, RefreshCw, Zap } from 'lucide-react';
 
 const Controls = () => {
   const { batchMove, resetData } = usePCContext();
