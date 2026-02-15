@@ -11,6 +11,10 @@ const COLS = 3;
 const BRANCHES: Branch[] = ['HQ', 'Sales', 'Engineering', 'HR', 'Warehouse'];
 const STATUS_ORDER: Status[] = ['Imaging', 'Shipped', 'Completed'];
 
+// Optimization: Pre-calculate indices for O(1) lookup
+const STATUS_INDEX = STATUS_ORDER.reduce((acc, status, i) => ({ ...acc, [status]: i }), {} as Record<string, number>);
+const BRANCH_INDEX = BRANCHES.reduce((acc, branch, i) => ({ ...acc, [branch]: i }), {} as Record<string, number>);
+
 // Colors
 const COLORS: Record<string, number[]> = {
   Imaging: [6, 182, 212], // Cyan-500
@@ -45,6 +49,64 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
 
   // Ref to store particle positions independent of React render cycle
   const particles = useRef<Record<string, { x: number; y: number; targetX: number; targetY: number; color: number[] }>>({});
+
+  // Optimization: Calculate targets only when pcs or layout changes
+  // This moves expensive calculation out of the draw loop (which runs at 60fps)
+  useEffect(() => {
+    const colWidth = width / COLS;
+    const rowHeight = height / BRANCHES.length;
+    const gridCounts: Record<string, number> = {};
+
+    // Create set of current IDs to identify removed particles
+    const currentIds = new Set(pcs.map(p => p.id));
+
+    pcs.forEach(pc => {
+        const statusIdx = STATUS_INDEX[pc.status];
+        const branchIdx = BRANCH_INDEX[pc.branch];
+
+        const cellKey = `${pc.status}-${pc.branch}`;
+        if (gridCounts[cellKey] === undefined) gridCounts[cellKey] = 0;
+
+        const countInCell = gridCounts[cellKey];
+        gridCounts[cellKey]++;
+
+        const cellX = statusIdx * colWidth;
+        const cellY = branchIdx * rowHeight;
+
+        const padding = 30; // space for labels
+        const blockSize = 12;
+        const gap = 4;
+        const availableWidth = Math.max(10, colWidth - padding * 2);
+
+        const colsInCell = Math.floor(availableWidth / (blockSize + gap)) || 1;
+        const rowInStack = Math.floor(countInCell / colsInCell);
+        const colInStack = countInCell % colsInCell;
+
+        const targetX = cellX + padding + colInStack * (blockSize + gap);
+        const targetY = cellY + 20 + rowInStack * (blockSize + gap);
+
+        if (!particles.current[pc.id]) {
+            particles.current[pc.id] = {
+                x: targetX,
+                y: targetY,
+                targetX,
+                targetY,
+                color: COLORS[pc.status] || [255, 255, 255]
+            };
+        } else {
+            particles.current[pc.id].targetX = targetX;
+            particles.current[pc.id].targetY = targetY;
+            particles.current[pc.id].color = COLORS[pc.status] || [255, 255, 255];
+        }
+    });
+
+    // Clean up removed particles
+    Object.keys(particles.current).forEach(id => {
+        if (!currentIds.has(id)) {
+            delete particles.current[id];
+        }
+    });
+  }, [pcs, width, height]);
 
   const setup = (p5: p5Types, canvasParentRef: Element) => {
     p5Ref.current = p5;
@@ -97,61 +159,6 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
     });
 
     const currentPCs = pcsRef.current;
-
-    // Counters for grid positioning
-    const gridCounts: Record<string, number> = {};
-
-    // --- Calculate Targets ---
-    // We only need to recalculate targets if pcs changed or layout changed.
-    // Ideally, this should be outside draw loop for performance, but inside is fine for 200 items.
-
-    currentPCs.forEach(pc => {
-        const statusIdx = STATUS_ORDER.indexOf(pc.status);
-        const branchIdx = BRANCHES.indexOf(pc.branch);
-
-        const cellKey = `${pc.status}-${pc.branch}`;
-        if (gridCounts[cellKey] === undefined) gridCounts[cellKey] = 0;
-
-        const countInCell = gridCounts[cellKey];
-        gridCounts[cellKey]++;
-
-        const cellX = statusIdx * colWidth;
-        const cellY = branchIdx * rowHeight;
-
-        const padding = 30; // space for labels
-        const blockSize = 12;
-        const gap = 4;
-        const availableWidth = Math.max(10, colWidth - padding * 2);
-
-        const colsInCell = Math.floor(availableWidth / (blockSize + gap)) || 1;
-        const rowInStack = Math.floor(countInCell / colsInCell);
-        const colInStack = countInCell % colsInCell;
-
-        const targetX = cellX + padding + colInStack * (blockSize + gap);
-        const targetY = cellY + 20 + rowInStack * (blockSize + gap);
-
-        if (!particles.current[pc.id]) {
-            particles.current[pc.id] = {
-                x: targetX,
-                y: targetY,
-                targetX,
-                targetY,
-                color: COLORS[pc.status] || [255, 255, 255]
-            };
-        } else {
-            particles.current[pc.id].targetX = targetX;
-            particles.current[pc.id].targetY = targetY;
-            particles.current[pc.id].color = COLORS[pc.status] || [255, 255, 255];
-        }
-    });
-
-    // Clean up removed particles
-    const currentIds = new Set(currentPCs.map(p => p.id));
-    Object.keys(particles.current).forEach(id => {
-        if (!currentIds.has(id)) {
-            delete particles.current[id];
-        }
-    });
 
     // --- Animation & Rendering ---
     let hoveredPC: PC | null = null;
@@ -208,7 +215,8 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
     }
   };
 
-  return <Sketch setup={setup} draw={draw} />;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return <Sketch setup={setup as any} draw={draw as any} />;
 };
 
 export default VisualizerContent;
