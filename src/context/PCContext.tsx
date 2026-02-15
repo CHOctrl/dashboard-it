@@ -65,7 +65,7 @@ export const PCProvider = ({ children }: { children: ReactNode }) => {
       const shuffled = [...candidates].sort(() => 0.5 - Math.random());
 
       // Select 'count' items (or fewer if not enough)
-      const toMove = shuffled.slice(0, Math.min(count, shuffled.length)).map(p => p.id);
+      const toMove = shuffled.slice(0, Math.min(Math.max(0, count), shuffled.length)).map(p => p.id);
 
       return prev.map(pc => toMove.includes(pc.id) ? { ...pc, status: toStatus } : pc);
     });
