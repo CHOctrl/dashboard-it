@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import React, { useState, useEffect, useRef } from 'react';
+import { debounce } from '../utils/debounce';
 
 const VisualizerContent = dynamic(() => import('./VisualizerContent'), {
   ssr: false,
@@ -26,9 +27,14 @@ const Visualizer = () => {
       }
     };
 
+    const handleResize = debounce(updateDimensions, 150);
+
     updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+    window.addEventListener('resize', handleResize);
+    return () => {
+      handleResize.cancel();
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   return (
