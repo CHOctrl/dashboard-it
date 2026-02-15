@@ -46,13 +46,15 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
   // Ref to store particle positions independent of React render cycle
   const particles = useRef<Record<string, { x: number; y: number; targetX: number; targetY: number; color: number[] }>>({});
 
-  const setup = (p5: p5Types, canvasParentRef: Element) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const setup = (p5: any, canvasParentRef: Element) => {
     p5Ref.current = p5;
     p5.createCanvas(width, height).parent(canvasParentRef);
     p5.frameRate(60);
   };
 
-  const draw = (p5: p5Types) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const draw = (p5: any) => {
     p5.background(COLORS.Background);
 
     // Draw grid lines
