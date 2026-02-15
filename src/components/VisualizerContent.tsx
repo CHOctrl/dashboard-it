@@ -44,7 +44,8 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
   }, [width, height]);
 
   // Ref to store particle positions independent of React render cycle
-  const particles = useRef<Record<string, { x: number; y: number; targetX: number; targetY: number; color: number[] }>>({});
+  // Optimized: Added lastSeenFrame to track active particles without allocating sets
+  const particles = useRef<Record<string, { x: number; y: number; targetX: number; targetY: number; color: number[]; lastSeenFrame: number }>>({});
 
   const setup = (p5: p5Types, canvasParentRef: Element) => {
     p5Ref.current = p5;
@@ -136,19 +137,21 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
                 y: targetY,
                 targetX,
                 targetY,
-                color: COLORS[pc.status] || [255, 255, 255]
+                color: COLORS[pc.status] || [255, 255, 255],
+                lastSeenFrame: p5.frameCount
             };
         } else {
             particles.current[pc.id].targetX = targetX;
             particles.current[pc.id].targetY = targetY;
             particles.current[pc.id].color = COLORS[pc.status] || [255, 255, 255];
+            particles.current[pc.id].lastSeenFrame = p5.frameCount;
         }
     });
 
     // Clean up removed particles
-    const currentIds = new Set(currentPCs.map(p => p.id));
+    // Optimized: Check lastSeenFrame instead of allocating new Set
     Object.keys(particles.current).forEach(id => {
-        if (!currentIds.has(id)) {
+        if (particles.current[id].lastSeenFrame !== p5.frameCount) {
             delete particles.current[id];
         }
     });
