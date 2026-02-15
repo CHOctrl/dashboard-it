@@ -42,6 +42,16 @@ const generateMockData = (count: number = 200): PC[] => {
   return data;
 };
 
+// Fisher-Yates shuffle algorithm
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
+
 export const PCProvider = ({ children }: { children: ReactNode }) => {
   const [pcs, setPcs] = useState<PC[]>([]);
 
@@ -61,8 +71,8 @@ export const PCProvider = ({ children }: { children: ReactNode }) => {
       const candidates = prev.filter(p => p.status === fromStatus);
       if (candidates.length === 0) return prev;
 
-      // Shuffle candidates
-      const shuffled = [...candidates].sort(() => 0.5 - Math.random());
+      // Shuffle candidates using Fisher-Yates
+      const shuffled = shuffleArray(candidates);
 
       // Select 'count' items (or fewer if not enough)
       const toMove = shuffled.slice(0, Math.min(count, shuffled.length)).map(p => p.id);
