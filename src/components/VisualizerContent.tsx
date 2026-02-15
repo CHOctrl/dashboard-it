@@ -208,7 +208,9 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
     }
   };
 
-  return <Sketch setup={setup} draw={draw} />;
+  // Cast to any to resolve type mismatch between p5 package and @types/p5 expected by react-p5
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return <Sketch setup={setup as any} draw={draw as any} />;
 };
 
 export default VisualizerContent;
