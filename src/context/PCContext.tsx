@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { PC, Status, Branch } from '../types/pc';
+import { generateSecureSerial } from '../utils/crypto';
 
 interface PCContextType {
   pcs: PC[];
@@ -15,14 +16,6 @@ const PCContext = createContext<PCContextType | undefined>(undefined);
 
 const BRANCHES: Branch[] = ['HQ', 'Sales', 'Engineering', 'HR', 'Warehouse'];
 
-const generateSerial = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let serial = '';
-  for (let i = 0; i < 8; i++) {
-    serial += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return serial;
-};
 
 const generateMockData = (count: number = 200): PC[] => {
   const data: PC[] = [];
@@ -34,7 +27,7 @@ const generateMockData = (count: number = 200): PC[] => {
 
     data.push({
       id: `pc-${i}`,
-      serial: generateSerial(),
+      serial: generateSecureSerial(),
       branch: BRANCHES[Math.floor(Math.random() * BRANCHES.length)],
       status: status,
     });
