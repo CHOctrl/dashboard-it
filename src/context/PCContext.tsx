@@ -62,7 +62,11 @@ export const PCProvider = ({ children }: { children: ReactNode }) => {
       if (candidates.length === 0) return prev;
 
       // Shuffle candidates
-      const shuffled = [...candidates].sort(() => 0.5 - Math.random());
+      const shuffled = [...candidates];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
 
       // Select 'count' items (or fewer if not enough)
       const toMove = shuffled.slice(0, Math.min(count, shuffled.length)).map(p => p.id);
