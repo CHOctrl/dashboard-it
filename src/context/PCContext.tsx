@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { PC, Status, Branch } from '../types/pc';
+import { PC, Status } from '../types/pc';
+import { BRANCHES } from '../constants';
 
 interface PCContextType {
   pcs: PC[];
@@ -13,7 +14,6 @@ interface PCContextType {
 
 const PCContext = createContext<PCContextType | undefined>(undefined);
 
-const BRANCHES: Branch[] = ['HQ', 'Sales', 'Engineering', 'HR', 'Warehouse'];
 
 const generateSerial = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

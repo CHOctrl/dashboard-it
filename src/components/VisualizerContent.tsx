@@ -4,11 +4,11 @@ import React, { useRef, useEffect } from 'react';
 import Sketch from 'react-p5';
 import p5Types from 'p5';
 import { usePCContext } from '../context/PCContext';
-import { PC, Branch, Status } from '../types/pc';
+import { PC, Status } from '../types/pc';
+import { BRANCHES } from '../constants';
 
 // Constants
 const COLS = 3;
-const BRANCHES: Branch[] = ['HQ', 'Sales', 'Engineering', 'HR', 'Warehouse'];
 const STATUS_ORDER: Status[] = ['Imaging', 'Shipped', 'Completed'];
 
 // Colors
