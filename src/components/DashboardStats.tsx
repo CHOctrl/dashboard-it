@@ -14,28 +14,10 @@ import {
 import { usePCContext } from '../context/PCContext';
 
 const DashboardStats = () => {
-  const { pcs } = usePCContext();
+  const { pcs, getStats } = usePCContext();
 
   // Aggregate stats from the context
-  const data = useMemo(() => {
-    const statsMap: Record<string, { Imaging: number; Shipped: number; Completed: number }> = {};
-    const branches = ['HQ', 'Sales', 'Engineering', 'HR', 'Warehouse'];
-
-    branches.forEach(b => {
-      statsMap[b] = { Imaging: 0, Shipped: 0, Completed: 0 };
-    });
-
-    pcs.forEach(pc => {
-      if (statsMap[pc.branch]) {
-        statsMap[pc.branch][pc.status]++;
-      }
-    });
-
-    return Object.entries(statsMap).map(([name, counts]) => ({
-      name,
-      ...counts,
-    }));
-  }, [pcs]);
+  const data = useMemo(() => getStats(), [getStats]);
 
   // Calculate totals for a summary
   const totals = useMemo(() => {
