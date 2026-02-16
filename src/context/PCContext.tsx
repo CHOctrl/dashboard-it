@@ -52,16 +52,21 @@ export const PCProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const movePC = useCallback((id: string, newStatus: Status, newBranch?: Branch) => {
-    setPcs(prev => prev.map(pc => {
-      if (pc.id === id) {
-        return {
-          ...pc,
-          status: newStatus,
-          branch: newBranch || pc.branch
-        };
-      }
-      return pc;
-    }));
+    setPcs(prev => {
+      // Find the item
+      const index = prev.findIndex(p => p.id === id);
+      if (index === -1) return prev;
+
+      const item = { ...prev[index] };
+      item.status = newStatus;
+      if (newBranch) item.branch = newBranch;
+
+      // Remove from old position and push to end to ensure it appears "behind the last block"
+      const newPcs = [...prev];
+      newPcs.splice(index, 1);
+      newPcs.push(item);
+      return newPcs;
+    });
   }, []);
 
   const batchMove = useCallback((count: number, fromStatus: Status, toStatus: Status) => {
