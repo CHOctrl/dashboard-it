@@ -52,48 +52,55 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
 
   const setup = (p5: p5Types, canvasParentRef: Element) => {
     p5Ref.current = p5;
-    p5.createCanvas(width, height).parent(canvasParentRef);
+    const renderer = p5.createCanvas(width, height).parent(canvasParentRef);
     p5.frameRate(60);
-  };
 
-  const mousePressed = (p5: p5Types) => {
-      // Find clicked particle
-      const mouseX = p5.mouseX;
-      const mouseY = p5.mouseY;
+    // Native DOM event listeners for robust handling
+    const canvas = renderer.elt;
 
-      // Iterate backwards to find top-most element if overlapping (though grid prevents overlap usually)
+    const onMouseDown = (e: MouseEvent) => {
+      const mouseX = e.offsetX;
+      const mouseY = e.offsetY;
+
       const ids = Object.keys(particles.current);
       for (let i = ids.length - 1; i >= 0; i--) {
           const id = ids[i];
           const p = particles.current[id];
-          // Check collision with 12x12 box. Using top-left origin.
           if (mouseX >= p.x && mouseX <= p.x + 12 &&
               mouseY >= p.y && mouseY <= p.y + 12) {
 
               draggedId.current = id;
               dragOffset.current = { x: mouseX - p.x, y: mouseY - p.y };
-              p.isManual = true; // Mark as manually controlled
+              p.isManual = true;
               break;
           }
       }
-  };
+    };
 
-  const mouseDragged = (p5: p5Types) => {
+    const onMouseMove = (e: MouseEvent) => {
       if (draggedId.current && particles.current[draggedId.current]) {
           const p = particles.current[draggedId.current];
-          const newX = p5.mouseX - dragOffset.current.x;
-          const newY = p5.mouseY - dragOffset.current.y;
+          const newX = e.offsetX - dragOffset.current.x;
+          const newY = e.offsetY - dragOffset.current.y;
 
           p.x = newX;
           p.y = newY;
-          // Update target as well so it doesn't drift if we re-enable lerp later (or just for consistency)
           p.targetX = newX;
           p.targetY = newY;
       }
-  };
+    };
 
-  const mouseReleased = (p5: p5Types) => {
-      draggedId.current = null;
+    const onMouseUp = () => {
+      if (draggedId.current) {
+          draggedId.current = null;
+      }
+    };
+
+    // Attach listeners
+    canvas.addEventListener('mousedown', onMouseDown);
+    canvas.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('mouseup', onMouseUp);
+    canvas.addEventListener('mouseleave', onMouseUp);
   };
 
   const draw = (p5: p5Types) => {
@@ -144,10 +151,6 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
 
     // Counters for grid positioning
     const gridCounts: Record<string, number> = {};
-
-    // --- Calculate Targets ---
-    // We only need to recalculate targets if pcs changed or layout changed.
-    // Ideally, this should be outside draw loop for performance, but inside is fine for 200 items.
 
     currentPCs.forEach(pc => {
         const statusIdx = STATUS_ORDER.indexOf(pc.status);
@@ -207,10 +210,6 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
     let hoveredY = 0;
 
     Object.entries(particles.current).forEach(([id, p]) => {
-        // If manual, we might skip lerp or just lerp to manual target (which is same as pos during drag)
-        // If not manual, lerp towards grid target.
-        // If dragging, position is updated directly in mouseDragged, but lerp logic:
-        // x += (targetX - x) * 0.1 -> if targetX == x, no movement.
 
         p.x += (p.targetX - p.x) * 0.1;
         p.y += (p.targetY - p.y) * 0.1;
@@ -219,7 +218,8 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
         p5.noStroke();
         p5.rect(p.x, p.y, 12, 12, 2);
 
-        // Hover detection (skip if dragging to avoid flicker/confusion, or keep it)
+        // Hover detection
+        // Use mouseX from p5 which is updated automatically
         if (!draggedId.current && p5.mouseX >= p.x && p5.mouseX <= p.x + 12 &&
             p5.mouseY >= p.y && p5.mouseY <= p.y + 12) {
              const pc = currentPCs.find(item => item.id === id);
@@ -254,7 +254,6 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
         p5.noStroke();
         p5.textAlign(p5.LEFT, p5.TOP);
         p5.textSize(12);
-        // Cast to PC to satisfy TS in case of inference issues inside p5 loop context
         const info = hoveredPC as PC;
         p5.text(`S/N: ${info.serial}`, tx + 10, ty + 10);
         p5.text(`Branch: ${info.branch}`, tx + 10, ty + 25);
@@ -262,7 +261,7 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
     }
   };
 
-  return <Sketch setup={setup} draw={draw} mousePressed={mousePressed} mouseDragged={mouseDragged} mouseReleased={mouseReleased} />;
+  return <Sketch setup={setup} draw={draw} />;
 };
 
 export default VisualizerContent;
