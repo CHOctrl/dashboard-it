@@ -1,13 +1,14 @@
 'use client';
 
+import React, { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import React, { useState, useEffect, useRef } from 'react';
 
+// Dynamically import the P5 component with no SSR
 const VisualizerContent = dynamic(() => import('./VisualizerContent'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-full w-full bg-slate-900 text-slate-400">
-      Loading Visualization...
+    <div className="w-full h-full flex items-center justify-center text-slate-400">
+      Initializing Visualization...
     </div>
   ),
 });
@@ -32,10 +33,7 @@ const Visualizer = () => {
   }, []);
 
   return (
-    <div ref={containerRef} className="w-full h-[600px] bg-slate-900 rounded-xl overflow-hidden border border-slate-700 shadow-xl relative">
-      <div className="absolute top-2 right-2 z-10 text-xs text-slate-500 font-mono">
-        CANVAS: {dimensions.width}x{dimensions.height}
-      </div>
+    <div ref={containerRef} className="w-full h-[600px] bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm relative">
       <VisualizerContent width={dimensions.width} height={dimensions.height} />
     </div>
   );

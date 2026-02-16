@@ -49,16 +49,16 @@ const DashboardStats = () => {
   }, [pcs]);
 
   return (
-    <div className="w-full bg-slate-900/50 backdrop-blur-md border border-slate-700 rounded-xl p-4 shadow-xl">
+    <div className="w-full bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
       <div className="flex flex-col md:flex-row justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-cyan-500 animate-pulse"></span>
+        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></span>
           Deployment Status
         </h2>
         <div className="flex text-sm font-medium">
-          <div className="text-cyan-400 font-bold mr-6">Imaging: {totals.Imaging}</div>
-          <div className="text-amber-400 font-bold mr-6">Shipped: {totals.Shipped}</div>
-          <div className="text-emerald-400 font-bold">Completed: {totals.Completed}</div>
+          <div className="text-blue-600 font-bold mr-6">Imaging: {totals.Imaging}</div>
+          <div className="text-orange-500 font-bold mr-6">Shipped: {totals.Shipped}</div>
+          <div className="text-emerald-600 font-bold">Completed: {totals.Completed}</div>
         </div>
       </div>
 
@@ -73,16 +73,17 @@ const DashboardStats = () => {
               bottom: 5,
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-            <XAxis dataKey="name" stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
-            <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+            <XAxis dataKey="name" stroke="#64748b" tick={{ fill: '#64748b' }} />
+            <YAxis stroke="#64748b" tick={{ fill: '#64748b' }} />
             <Tooltip
-              contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-              itemStyle={{ color: '#f8fafc' }}
+              contentStyle={{ backgroundColor: '#fff', borderColor: '#e2e8f0', color: '#1e293b' }}
+              itemStyle={{ color: '#1e293b' }}
+              cursor={{ fill: '#f1f5f9' }}
             />
-            <Legend />
-            <Bar dataKey="Imaging" stackId="a" fill="#06b6d4" name="Imaging" radius={[0, 0, 4, 4]} />
-            <Bar dataKey="Shipped" stackId="a" fill="#f59e0b" name="Shipped" />
+            <Legend wrapperStyle={{ color: '#475569' }} />
+            <Bar dataKey="Imaging" stackId="a" fill="#3b82f6" name="Imaging" radius={[0, 0, 4, 4]} />
+            <Bar dataKey="Shipped" stackId="a" fill="#f97316" name="Shipped" />
             <Bar dataKey="Completed" stackId="a" fill="#10b981" name="Completed" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

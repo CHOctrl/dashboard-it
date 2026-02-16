@@ -13,12 +13,12 @@ const STATUS_ORDER: Status[] = ['Imaging', 'Shipped', 'Completed'];
 
 // Colors
 const COLORS: Record<string, number[]> = {
-  Imaging: [6, 182, 212], // Cyan-500
-  Shipped: [245, 158, 11], // Amber-500
+  Imaging: [59, 130, 246], // Blue-500
+  Shipped: [249, 115, 22], // Orange-500
   Completed: [16, 185, 129], // Emerald-500
-  Background: [15, 23, 42], // Slate-900
-  Text: [148, 163, 184], // Slate-400
-  Grid: [30, 41, 59], // Slate-800
+  Background: [255, 255, 255], // White
+  Text: [71, 85, 105], // Slate-600
+  Grid: [241, 245, 249], // Slate-100
 };
 
 interface VisualizerContentProps {
@@ -131,21 +131,21 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
   const draw = (p5: p5Types) => {
     p5.background(COLORS.Background);
 
-    // Draw grid lines
-    p5.stroke(COLORS.Grid);
-    p5.strokeWeight(1);
+    // Draw grid lines - DISABLED for cleaner look
+    // p5.stroke(COLORS.Grid);
+    // p5.strokeWeight(1);
 
     const colWidth = width / COLS;
     const rowHeight = height / BRANCHES.length;
 
     // Vertical lines
-    for (let i = 1; i < COLS; i++) {
-      p5.line(i * colWidth, 0, i * colWidth, height);
-    }
+    // for (let i = 1; i < COLS; i++) {
+    //   p5.line(i * colWidth, 0, i * colWidth, height);
+    // }
     // Horizontal lines
-    for (let i = 1; i < BRANCHES.length; i++) {
-      p5.line(0, i * rowHeight, width, i * rowHeight);
-    }
+    // for (let i = 1; i < BRANCHES.length; i++) {
+    //   p5.line(0, i * rowHeight, width, i * rowHeight);
+    // }
 
     // Draw Column Headers
     p5.noStroke();
@@ -253,7 +253,7 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
                  hoveredX = p.x;
                  hoveredY = p.y;
              }
-             p5.stroke(255);
+             p5.stroke(30, 41, 59); // Dark stroke for hover
              p5.strokeWeight(2);
              p5.rect(p.x, p.y, 12, 12, 2);
         }
@@ -270,12 +270,12 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
         if (ty + tooltipHeight > height) ty = height - tooltipHeight;
         if (ty < 0) ty = 10;
 
-        p5.fill(15, 23, 42, 240); // Darker background
-        p5.stroke(100);
+        p5.fill(255, 255, 255, 240); // White background
+        p5.stroke(203, 213, 225); // Slate-300 border
         p5.strokeWeight(1);
         p5.rect(tx, ty, tooltipWidth, tooltipHeight, 6);
 
-        p5.fill(255);
+        p5.fill(30, 41, 59); // Slate-800 text
         p5.noStroke();
         p5.textAlign(p5.LEFT, p5.TOP);
         p5.textSize(12);
