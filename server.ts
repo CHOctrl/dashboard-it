@@ -2,15 +2,17 @@ import { createServer } from 'node:http';
 import { parse } from 'node:url';
 import next from 'next';
 import { Server } from 'socket.io';
+import fs from 'node:fs';
+import path from 'node:path';
 import { PC, Status, Branch } from './src/types/pc';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
 const port = parseInt(process.env.PORT || '3000', 10);
-// when using middleware `hostname` and `port` must be provided below
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
+const DATA_FILE = path.join(process.cwd(), 'data', 'pcs.json');
 const BRANCHES: Branch[] = ['HQ', 'Sales', 'Engineering', 'HR', 'Warehouse'];
 
 const generateSerial = () => {
@@ -40,8 +42,39 @@ const generateMockData = (count: number = 200): PC[] => {
   return data;
 };
 
-// In-memory state
-let pcs: PC[] = generateMockData();
+// Persistence helpers
+const loadData = (): PC[] => {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const content = fs.readFileSync(DATA_FILE, 'utf-8');
+      return JSON.parse(content);
+    }
+  } catch (err) {
+    console.error('Failed to load data:', err);
+  }
+  return generateMockData();
+};
+
+const saveData = (data: PC[]) => {
+  try {
+    // Ensure directory exists
+    const dir = path.dirname(DATA_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error('Failed to save data:', err);
+  }
+};
+
+// In-memory state initialized from file or mock
+let pcs: PC[] = loadData();
+
+// Save initial state if file didn't exist
+if (!fs.existsSync(DATA_FILE)) {
+  saveData(pcs);
+}
 
 app.prepare().then(() => {
   const server = createServer(async (req, res) => {
@@ -63,6 +96,7 @@ app.prepare().then(() => {
 
     socket.on('move', ({ id, newStatus }: { id: string, newStatus: Status }) => {
       pcs = pcs.map(pc => pc.id === id ? { ...pc, status: newStatus } : pc);
+      saveData(pcs);
       // Broadcast update to all clients (including sender)
       io.emit('update', pcs);
     });
@@ -83,12 +117,14 @@ app.prepare().then(() => {
       const toMoveIds = new Set(shuffled.slice(0, Math.min(count, shuffled.length)).map(p => p.id));
 
       pcs = pcs.map(pc => toMoveIds.has(pc.id) ? { ...pc, status: toStatus } : pc);
+      saveData(pcs);
 
       io.emit('update', pcs);
     });
 
     socket.on('reset', () => {
       pcs = generateMockData();
+      saveData(pcs);
       io.emit('update', pcs);
     });
   });
