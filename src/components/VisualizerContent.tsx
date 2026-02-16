@@ -27,7 +27,7 @@ interface VisualizerContentProps {
 }
 
 const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, height = 600 }) => {
-  const { pcs } = usePCContext();
+  const { pcs, movePC } = usePCContext();
   const pcsRef = useRef(pcs);
   const p5Ref = useRef<p5Types | null>(null);
 
@@ -90,8 +90,36 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
       }
     };
 
-    const onMouseUp = () => {
+    const onMouseUp = (e: MouseEvent) => {
       if (draggedId.current) {
+          const id = draggedId.current;
+
+          // Determine drop location
+          const mouseX = e.offsetX;
+          const mouseY = e.offsetY;
+
+          const colWidth = width / COLS;
+          const rowHeight = height / BRANCHES.length;
+
+          const statusIdx = Math.floor(mouseX / colWidth);
+          const branchIdx = Math.floor(mouseY / rowHeight);
+
+          // Validate indices
+          if (statusIdx >= 0 && statusIdx < STATUS_ORDER.length &&
+              branchIdx >= 0 && branchIdx < BRANCHES.length) {
+
+              const newStatus = STATUS_ORDER[statusIdx];
+              const newBranch = BRANCHES[branchIdx];
+
+              // Call context action to update state
+              movePC(id, newStatus, newBranch);
+
+              // Remove manual flag so it snaps to new grid position
+              if (particles.current[id]) {
+                  particles.current[id].isManual = false;
+              }
+          }
+
           draggedId.current = null;
       }
     };
@@ -187,6 +215,7 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
             };
         } else {
             // Only update target from grid if NOT manually controlled
+            // Note: When movePC is called, we unset isManual, so it will get new targets here next frame
             if (!particles.current[pc.id].isManual) {
                 particles.current[pc.id].targetX = targetX;
                 particles.current[pc.id].targetY = targetY;
@@ -219,7 +248,6 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
         p5.rect(p.x, p.y, 12, 12, 2);
 
         // Hover detection
-        // Use mouseX from p5 which is updated automatically
         if (!draggedId.current && p5.mouseX >= p.x && p5.mouseX <= p.x + 12 &&
             p5.mouseY >= p.y && p5.mouseY <= p.y + 12) {
              const pc = currentPCs.find(item => item.id === id);

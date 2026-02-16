@@ -5,7 +5,7 @@ import { PC, Status, Branch } from '../types/pc';
 
 interface PCContextType {
   pcs: PC[];
-  movePC: (id: string, newStatus: Status) => void;
+  movePC: (id: string, newStatus: Status, newBranch?: Branch) => void;
   batchMove: (count: number, fromStatus: Status, toStatus: Status) => void;
   resetData: () => void;
   getStats: () => { name: string; Imaging: number; Shipped: number; Completed: number }[];
@@ -51,8 +51,17 @@ export const PCProvider = ({ children }: { children: ReactNode }) => {
     setPcs(generateMockData());
   }, []);
 
-  const movePC = useCallback((id: string, newStatus: Status) => {
-    setPcs(prev => prev.map(pc => pc.id === id ? { ...pc, status: newStatus } : pc));
+  const movePC = useCallback((id: string, newStatus: Status, newBranch?: Branch) => {
+    setPcs(prev => prev.map(pc => {
+      if (pc.id === id) {
+        return {
+          ...pc,
+          status: newStatus,
+          branch: newBranch || pc.branch
+        };
+      }
+      return pc;
+    }));
   }, []);
 
   const batchMove = useCallback((count: number, fromStatus: Status, toStatus: Status) => {
