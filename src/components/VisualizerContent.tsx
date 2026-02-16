@@ -98,8 +98,12 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
           const mouseX = e.offsetX;
           const mouseY = e.offsetY;
 
-          const colWidth = width / COLS;
-          const rowHeight = height / BRANCHES.length;
+          // Use current dimensions from p5 instance, not stale closure props
+          const currentWidth = p5.width;
+          const currentHeight = p5.height;
+
+          const colWidth = currentWidth / COLS;
+          const rowHeight = currentHeight / BRANCHES.length;
 
           const statusIdx = Math.floor(mouseX / colWidth);
           const branchIdx = Math.floor(mouseY / rowHeight);
