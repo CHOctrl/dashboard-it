@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 30, 41, 59;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 248, 250, 252;
+  --foreground-rgb: 51, 65, 85; /* Slate-700 */
+  --background-start-rgb: 241, 245, 249; /* Slate-100 */
+  --background-end-rgb: 241, 245, 249; /* Slate-100 */
 }
 
 body {

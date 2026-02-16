@@ -33,8 +33,8 @@ const Controls = () => {
         onClick={() => setIsPlaying(!isPlaying)}
         className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all shadow-sm ${
           isPlaying
-            ? 'bg-orange-500 hover:bg-orange-600 text-white'
-            : 'bg-blue-600 hover:bg-blue-700 text-white'
+            ? 'bg-slate-700 hover:bg-slate-800 text-white'
+            : 'bg-slate-600 hover:bg-slate-700 text-white'
         }`}
       >
         {isPlaying ? <Pause size={20} /> : <Play size={20} />}

@@ -13,12 +13,12 @@ const STATUS_ORDER: Status[] = ['Imaging', 'Shipped', 'Completed'];
 
 // Colors
 const COLORS: Record<string, number[]> = {
-  Imaging: [59, 130, 246], // Blue-500
-  Shipped: [249, 115, 22], // Orange-500
-  Completed: [16, 185, 129], // Emerald-500
-  Background: [255, 255, 255], // White
-  Text: [71, 85, 105], // Slate-600
-  Grid: [241, 245, 249], // Slate-100
+  Imaging: [71, 85, 105], // Slate-600
+  Shipped: [100, 116, 139], // Slate-500
+  Completed: [51, 65, 85], // Slate-700
+  Background: [248, 250, 252], // Slate-50 (Very light gray, almost white)
+  Text: [100, 116, 139], // Slate-500
+  // No Grid Color needed as we are removing it
 };
 
 interface VisualizerContentProps {
@@ -131,21 +131,10 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
   const draw = (p5: p5Types) => {
     p5.background(COLORS.Background);
 
-    // Draw grid lines - DISABLED for cleaner look
-    // p5.stroke(COLORS.Grid);
-    // p5.strokeWeight(1);
+    // GRID LINES REMOVED COMPLETELY
 
     const colWidth = width / COLS;
     const rowHeight = height / BRANCHES.length;
-
-    // Vertical lines
-    // for (let i = 1; i < COLS; i++) {
-    //   p5.line(i * colWidth, 0, i * colWidth, height);
-    // }
-    // Horizontal lines
-    // for (let i = 1; i < BRANCHES.length; i++) {
-    //   p5.line(0, i * rowHeight, width, i * rowHeight);
-    // }
 
     // Draw Column Headers
     p5.noStroke();
@@ -208,7 +197,7 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
                 y: targetY,
                 targetX,
                 targetY,
-                color: COLORS[pc.status] || [255, 255, 255]
+                color: COLORS[pc.status] || [100, 116, 139]
             };
         } else {
             // Only update target from grid if NOT manually controlled
@@ -217,7 +206,7 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
                 particles.current[pc.id].targetY = targetY;
             }
             // Always update color based on status
-            particles.current[pc.id].color = COLORS[pc.status] || [255, 255, 255];
+            particles.current[pc.id].color = COLORS[pc.status] || [100, 116, 139];
         }
     });
 
