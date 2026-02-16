@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
 import { PC, Status, Branch } from '../types/pc';
 
 interface PCContextType {
@@ -15,64 +16,38 @@ const PCContext = createContext<PCContextType | undefined>(undefined);
 
 const BRANCHES: Branch[] = ['HQ', 'Sales', 'Engineering', 'HR', 'Warehouse'];
 
-const generateSerial = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let serial = '';
-  for (let i = 0; i < 8; i++) {
-    serial += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return serial;
-};
-
-const generateMockData = (count: number = 200): PC[] => {
-  const data: PC[] = [];
-  for (let i = 0; i < count; i++) {
-    let status: Status = 'Imaging';
-    const r = Math.random();
-    if (r > 0.8) status = 'Completed';
-    else if (r > 0.6) status = 'Shipped';
-
-    data.push({
-      id: `pc-${i}`,
-      serial: generateSerial(),
-      branch: BRANCHES[Math.floor(Math.random() * BRANCHES.length)],
-      status: status,
-    });
-  }
-  return data;
-};
-
 export const PCProvider = ({ children }: { children: ReactNode }) => {
   const [pcs, setPcs] = useState<PC[]>([]);
+  const socketRef = useRef<Socket | null>(null);
 
-  // Initialize data on client side only
   useEffect(() => {
-    // eslint-disable-next-line
-    setPcs(generateMockData());
+    // Connect to the server
+    const socket = io();
+    socketRef.current = socket;
+
+    socket.on('initialState', (data: PC[]) => {
+      setPcs(data);
+    });
+
+    socket.on('update', (data: PC[]) => {
+      setPcs(data);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const movePC = useCallback((id: string, newStatus: Status) => {
-    setPcs(prev => prev.map(pc => pc.id === id ? { ...pc, status: newStatus } : pc));
+    socketRef.current?.emit('move', { id, newStatus });
   }, []);
 
   const batchMove = useCallback((count: number, fromStatus: Status, toStatus: Status) => {
-    setPcs(prev => {
-      // Find candidates with matching status
-      const candidates = prev.filter(p => p.status === fromStatus);
-      if (candidates.length === 0) return prev;
-
-      // Shuffle candidates
-      const shuffled = [...candidates].sort(() => 0.5 - Math.random());
-
-      // Select 'count' items (or fewer if not enough)
-      const toMove = shuffled.slice(0, Math.min(count, shuffled.length)).map(p => p.id);
-
-      return prev.map(pc => toMove.includes(pc.id) ? { ...pc, status: toStatus } : pc);
-    });
+    socketRef.current?.emit('batchMove', { count, fromStatus, toStatus });
   }, []);
 
   const resetData = useCallback(() => {
-    setPcs(generateMockData());
+    socketRef.current?.emit('reset');
   }, []);
 
   const getStats = useCallback(() => {
