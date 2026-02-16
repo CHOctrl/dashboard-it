@@ -94,8 +94,12 @@ app.prepare().then(() => {
     // Send initial state
     socket.emit('initialState', pcs);
 
-    socket.on('move', ({ id, newStatus }: { id: string, newStatus: Status }) => {
-      pcs = pcs.map(pc => pc.id === id ? { ...pc, status: newStatus } : pc);
+    socket.on('move', ({ id, newStatus, newBranch }: { id: string, newStatus: Status, newBranch?: Branch }) => {
+      pcs = pcs.map(pc => pc.id === id ? {
+        ...pc,
+        status: newStatus,
+        branch: newBranch || pc.branch
+      } : pc);
       saveData(pcs);
       // Broadcast update to all clients (including sender)
       io.emit('update', pcs);
