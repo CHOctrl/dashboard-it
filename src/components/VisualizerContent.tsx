@@ -27,7 +27,7 @@ interface VisualizerContentProps {
 }
 
 const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, height = 600 }) => {
-  const { pcs } = usePCContext();
+  const { pcs, movePC } = usePCContext();
   const pcsRef = useRef(pcs);
   const p5Ref = useRef<p5Types | null>(null);
 
@@ -90,8 +90,33 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
       }
     };
 
-    const onMouseUp = () => {
+    const onMouseUp = (e: MouseEvent) => {
       if (draggedId.current) {
+          const currentP5 = p5Ref.current;
+          if (currentP5) {
+              const w = currentP5.width;
+              const h = currentP5.height;
+              const colW = w / COLS;
+              const rowH = h / BRANCHES.length;
+
+              const mx = e.offsetX;
+              const my = e.offsetY;
+
+              let cIdx = Math.floor(mx / colW);
+              let rIdx = Math.floor(my / rowH);
+
+              cIdx = Math.max(0, Math.min(cIdx, COLS - 1));
+              rIdx = Math.max(0, Math.min(rIdx, BRANCHES.length - 1));
+
+              const newStatus = STATUS_ORDER[cIdx];
+              const newBranch = BRANCHES[rIdx];
+
+              movePC(draggedId.current, newStatus, newBranch);
+
+              if (particles.current[draggedId.current]) {
+                  particles.current[draggedId.current].isManual = false;
+              }
+          }
           draggedId.current = null;
       }
     };

@@ -6,7 +6,7 @@ import { PC, Status, Branch } from '../types/pc';
 
 interface PCContextType {
   pcs: PC[];
-  movePC: (id: string, newStatus: Status) => void;
+  movePC: (id: string, newStatus: Status, newBranch?: Branch) => void;
   batchMove: (count: number, fromStatus: Status, toStatus: Status) => void;
   resetData: () => void;
   getStats: () => { name: string; Imaging: number; Shipped: number; Completed: number }[];
@@ -38,8 +38,8 @@ export const PCProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const movePC = useCallback((id: string, newStatus: Status) => {
-    socketRef.current?.emit('move', { id, newStatus });
+  const movePC = useCallback((id: string, newStatus: Status, newBranch?: Branch) => {
+    socketRef.current?.emit('move', { id, newStatus, newBranch });
   }, []);
 
   const batchMove = useCallback((count: number, fromStatus: Status, toStatus: Status) => {
