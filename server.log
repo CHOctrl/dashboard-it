@@ -1,6 +1,0 @@
-
-> dashboard@0.1.0 dev
-> tsx server.ts
-
-⨯ Unable to acquire lock at /app/.next/dev/lock, is another instance of next dev running?
-  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
