@@ -31,6 +31,10 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
   const pcsRef = useRef(pcs);
   const p5Ref = useRef<p5Types | null>(null);
 
+  // Drag state
+  const draggedId = useRef<string | null>(null);
+  const dragOffset = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
   // Update ref when pcs changes
   useEffect(() => {
     pcsRef.current = pcs;
@@ -44,12 +48,59 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
   }, [width, height]);
 
   // Ref to store particle positions independent of React render cycle
-  const particles = useRef<Record<string, { x: number; y: number; targetX: number; targetY: number; color: number[] }>>({});
+  const particles = useRef<Record<string, { x: number; y: number; targetX: number; targetY: number; color: number[]; isManual?: boolean }>>({});
 
   const setup = (p5: p5Types, canvasParentRef: Element) => {
     p5Ref.current = p5;
-    p5.createCanvas(width, height).parent(canvasParentRef);
+    const renderer = p5.createCanvas(width, height).parent(canvasParentRef);
     p5.frameRate(60);
+
+    // Native DOM event listeners for robust handling
+    const canvas = renderer.elt;
+
+    const onMouseDown = (e: MouseEvent) => {
+      const mouseX = e.offsetX;
+      const mouseY = e.offsetY;
+
+      const ids = Object.keys(particles.current);
+      for (let i = ids.length - 1; i >= 0; i--) {
+          const id = ids[i];
+          const p = particles.current[id];
+          if (mouseX >= p.x && mouseX <= p.x + 12 &&
+              mouseY >= p.y && mouseY <= p.y + 12) {
+
+              draggedId.current = id;
+              dragOffset.current = { x: mouseX - p.x, y: mouseY - p.y };
+              p.isManual = true;
+              break;
+          }
+      }
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (draggedId.current && particles.current[draggedId.current]) {
+          const p = particles.current[draggedId.current];
+          const newX = e.offsetX - dragOffset.current.x;
+          const newY = e.offsetY - dragOffset.current.y;
+
+          p.x = newX;
+          p.y = newY;
+          p.targetX = newX;
+          p.targetY = newY;
+      }
+    };
+
+    const onMouseUp = () => {
+      if (draggedId.current) {
+          draggedId.current = null;
+      }
+    };
+
+    // Attach listeners
+    canvas.addEventListener('mousedown', onMouseDown);
+    canvas.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('mouseup', onMouseUp);
+    canvas.addEventListener('mouseleave', onMouseUp);
   };
 
   const draw = (p5: p5Types) => {
@@ -101,10 +152,6 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
     // Counters for grid positioning
     const gridCounts: Record<string, number> = {};
 
-    // --- Calculate Targets ---
-    // We only need to recalculate targets if pcs changed or layout changed.
-    // Ideally, this should be outside draw loop for performance, but inside is fine for 200 items.
-
     currentPCs.forEach(pc => {
         const statusIdx = STATUS_ORDER.indexOf(pc.status);
         const branchIdx = BRANCHES.indexOf(pc.branch);
@@ -139,8 +186,12 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
                 color: COLORS[pc.status] || [255, 255, 255]
             };
         } else {
-            particles.current[pc.id].targetX = targetX;
-            particles.current[pc.id].targetY = targetY;
+            // Only update target from grid if NOT manually controlled
+            if (!particles.current[pc.id].isManual) {
+                particles.current[pc.id].targetX = targetX;
+                particles.current[pc.id].targetY = targetY;
+            }
+            // Always update color based on status
             particles.current[pc.id].color = COLORS[pc.status] || [255, 255, 255];
         }
     });
@@ -159,6 +210,7 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
     let hoveredY = 0;
 
     Object.entries(particles.current).forEach(([id, p]) => {
+
         p.x += (p.targetX - p.x) * 0.1;
         p.y += (p.targetY - p.y) * 0.1;
 
@@ -166,7 +218,9 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
         p5.noStroke();
         p5.rect(p.x, p.y, 12, 12, 2);
 
-        if (p5.mouseX >= p.x && p5.mouseX <= p.x + 12 &&
+        // Hover detection
+        // Use mouseX from p5 which is updated automatically
+        if (!draggedId.current && p5.mouseX >= p.x && p5.mouseX <= p.x + 12 &&
             p5.mouseY >= p.y && p5.mouseY <= p.y + 12) {
              const pc = currentPCs.find(item => item.id === id);
              if (pc) {
@@ -200,7 +254,6 @@ const VisualizerContent: React.FC<VisualizerContentProps> = ({ width = 800, heig
         p5.noStroke();
         p5.textAlign(p5.LEFT, p5.TOP);
         p5.textSize(12);
-        // Cast to PC to satisfy TS in case of inference issues inside p5 loop context
         const info = hoveredPC as PC;
         p5.text(`S/N: ${info.serial}`, tx + 10, ty + 10);
         p5.text(`Branch: ${info.branch}`, tx + 10, ty + 25);
